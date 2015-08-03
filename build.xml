@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<project default="default">
+    <target name="default" depends="clean, phpcs, test"/>
+
+    <target name="clean">
+        <delete dir="coverage"/>
+    </target>
+
+    <target name="phpcs">
+        <phpcodesniffer standard="PSR2" haltonerror="true">
+            <fileset refid="php"/>
+            <formatter type="full" usefile="false"/>
+        </phpcodesniffer>
+    </target>
+
+    <target name="test">
+        <phpunit haltonerror="true" haltonfailure="true" bootstrap="vendor/autoload.php">
+            <batchtest>
+                <fileset refid="tests"/>
+            </batchtest>
+        </phpunit>
+    </target>
+
+    <target name="coverage" depends="clean">
+        <mkdir dir="coverage"/>
+
+        <coverage-setup database="coverage/database">
+            <fileset refid="php"/>
+        </coverage-setup>
+
+        <phpunit haltonerror="true" haltonfailure="true" bootstrap="vendor/autoload.php" codecoverage="true">
+            <batchtest>
+                <fileset refid="tests"/>
+            </batchtest>
+        </phpunit>
+
+        <coverage-report outfile="coverage/coverage.xml">
+            <report styledir="/home/vagrant/.composer/vendor/phing/phing/etc/" todir="coverage"/>
+        </coverage-report>
+    </target>
+
+    <target name="fix">
+        <phpcodesniffer standard="PSR2">
+            <fileset refid="php"/>
+            <formatter type="diff" outfile="changes.diff"/>
+        </phpcodesniffer>
+        <exec command="patch -p0 &lt; changes.diff" passthru="true"/>
+        <exec command="rm changes.diff" passthru="true"/>
+    </target>
+
+    <fileset dir="." id="php">
+        <include name="src/*.php"/>
+        <exclude name="vendor/**" />
+        <exclude name="cache/**" />
+        <exclude name="tests/**" />
+    </fileset>
+
+    <fileset dir="." id="tests">
+        <include name="tests/**/*.php"/>
+    </fileset>
+
+</project>
